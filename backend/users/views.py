@@ -13,7 +13,7 @@ from django.contrib.auth.hashers import check_password
 from django.db.models import Count
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
@@ -36,6 +36,11 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by("email")
     serializer_class = UserSerializer
     pagination_class = UserPagination
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [AllowAny()]
+        return super().get_permissions()
 
     def get_serializer_class(self):
         if self.action == "create":

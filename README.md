@@ -22,6 +22,7 @@
 2) Вводим логин: `admin@example.com`, пароль: `admin`
 3) Регистрируем нашу БД, во вкладке ***Connection*** вводим данные:
    ![Снимок экрана от 2025-06-30 00-49-55](https://github.com/user-attachments/assets/d1ef3e8b-67f5-44f3-ad22-0c68046620e9)
+   ***P.s. Пароль: `postgres`***
 
 
 ## Переменные окружения (ENV)

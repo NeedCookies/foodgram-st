@@ -1,14 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
-
-# Локальные импорты
 from constants import NAME_MAX_LENGTH, UNIT_MAX_LENGTH
 
 User = get_user_model()
 
 
 class Ingredient(models.Model):
+    """Модель ингредиента с названием и единицей измерения."""
     name = models.CharField(
         max_length=NAME_MAX_LENGTH,
         verbose_name="Название",
@@ -34,6 +33,7 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    """Рецепт: автор, ингредиенты, описание и время приготовления и время добавления (по этому полю сортируем)."""
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -73,6 +73,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
+    """Промежуточная модель для связи многие-ко-многим рецепта с ингредиентами и их количеством."""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -104,6 +105,7 @@ class RecipeIngredient(models.Model):
 
 
 class UserRecipeRelation(models.Model):
+    """Связь пользователя и рецепта (от этой модели наследуем связь избранных и добавленных в список покупок рецептов)."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -130,6 +132,7 @@ class UserRecipeRelation(models.Model):
 
 
 class Favorite(UserRecipeRelation):
+    """Избранные рецепты пользователя."""
     class Meta(UserRecipeRelation.Meta):
         verbose_name = "Избранное"
         verbose_name_plural = "Избранное"
@@ -143,6 +146,7 @@ class Favorite(UserRecipeRelation):
 
 
 class ShoppingCart(UserRecipeRelation):
+    """Список покупок пользователя."""
     class Meta(UserRecipeRelation.Meta):
         verbose_name = "Список покупок"
         verbose_name_plural = "Списки покупок"

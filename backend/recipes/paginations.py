@@ -1,7 +1,5 @@
-# Сторонние библиотеки
 from rest_framework.pagination import PageNumberPagination
 
-# Наш (локальный) импорт
 from constants import DEFAULT_PAGE_SIZE
 
 

@@ -1,7 +1,5 @@
-# Сторонние библиотеки
 from django_filters import rest_framework as filters
 
-# Наши (локальные) импорты
 from .models import Ingredient
 
 

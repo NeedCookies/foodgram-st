@@ -1,7 +1,5 @@
-# Сторонние библиотеки
 from django.contrib import admin
 
-# Локальные импорты
 from .models import (
     Favorite,
     Ingredient,

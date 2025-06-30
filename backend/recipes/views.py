@@ -1,8 +1,6 @@
-# Стандартные библиотеки
 from http import HTTPStatus
 from io import BytesIO
 
-# Сторонние библиотеки
 from django.conf import settings
 from django.db.models import Sum
 from django.http import FileResponse
@@ -14,7 +12,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# Наши (локальные) импорты
 from .filters import IngredientFilter
 from .models import Recipe, Ingredient, Favorite, ShoppingCart
 from .paginations import RecipePagination
@@ -28,6 +25,7 @@ from .serializers.recipe_write import RecipeWriteSerializer
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для просмотра ингредиентов."""
     queryset = Ingredient.objects.all().order_by("name")
     serializer_class = IngredientSerializer
     filterset_class = IngredientFilter
@@ -36,6 +34,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    """Вьюсет для работы с рецептами - все CRUD операции."""
     queryset = Recipe.objects.all()
     serializer_class = RecipeReadSerializer
     pagination_class = RecipePagination
@@ -43,6 +42,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_fields = ["author"]
 
     def get_permissions(self):
+        """Определяет возможные действия, которые можно делать на платформе, наделяет правами доступа."""
         if self.action in [
             "create",
             "update",
@@ -55,14 +55,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_serializer_class(self):
+        """Выбор сериализатора в зависимости от действия."""
         if self.action in ("create", "update", "partial_update"):
             return RecipeWriteSerializer
         return RecipeReadSerializer
 
     def perform_create(self, serializer):
-        serializer.save() 
+        """Сохраняет новый рецепт."""
+        serializer.save()
 
     def update(self, request, *args, **kwargs):
+        """Редактирование рецепта (только для автора рецепта)."""
         recipe = self.get_object()
         if recipe.author != request.user:
             return Response(
@@ -72,6 +75,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
+        """Удаление рецепта (только для автора рецепта)."""
         recipe = self.get_object()
         if recipe.author != request.user:
             return Response(
@@ -81,6 +85,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
+        """Фильтрация рецептов по корзине и избранному."""
         queryset = super().get_queryset()
         user = self.request.user
         is_in_shopping_cart = self.request.query_params.get(
@@ -105,6 +110,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="get-link")
     def get_link(self, request, pk=None):
+        """Генерирует короткую ссылку на рецепт."""
         short_code = get_random_string(6)
         short_link = f"{settings.BASE_URL}/short/{short_code}"
         return Response({"short-link": short_link}, status=HTTPStatus.OK)
@@ -114,6 +120,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def favorite(self, request, pk=None):
+        """Добавление или удаление рецепта из избранного."""
         recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == "POST":
             data = {"user": request.user.id, "recipe": recipe.id}
@@ -141,11 +148,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def shopping_cart(self, request, pk=None):
+        """Добавление или удаление рецепта из корзины покупок."""
         recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == "POST":
             data = {"user": request.user.id, "recipe": recipe.id}
             serializer = ShoppingCartSerializer(
-                data=data, context={"request": request}
+                data=data,
+                context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
@@ -164,6 +173,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="download_shopping_cart")
     def download_shopping_cart(self, request):
+        """Скачивание списка покупок пользователя. Суммирует одинаковые ингриденты из разных рецептов, создает общий список."""
         user = request.user
         if not user.is_authenticated:
             return Response(

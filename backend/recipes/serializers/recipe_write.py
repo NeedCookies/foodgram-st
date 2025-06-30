@@ -1,20 +1,23 @@
-# Сторонние библиотеки
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-# Наши (локальные) импорты
 from constants import MIN_COOKING_TIME
 from ..models import Recipe, RecipeIngredient, Ingredient
 from ..fields import Base64ImageField
 
 
 class IngredientInRecipeSerializer(serializers.Serializer):
+    """Сериализатор для ингредиентов в составе рецепта."""
     id = serializers.IntegerField()
     amount = serializers.IntegerField(min_value=1)
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для создания и редактирования рецептов.
+    Обрабатывает валидацию ингредиентов, изображений и времени приготовления.
+    """
     image = Base64ImageField()
     ingredients = IngredientInRecipeSerializer(many=True)
 
@@ -23,6 +26,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "image", "text", "cooking_time", "ingredients")
 
     def validate(self, attrs):
+        """
+        Проверяет обязательность поля ingredients при обновлении рецепта.
+        """
         request = self.context.get("request")
         if request and request.method in ("PUT", "PATCH"):
             if (
@@ -46,7 +52,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def validate_image(self, value):
         if not value:
             raise ValidationError(
                 {"image": "Поле 'image' не может быть пустым."}
@@ -54,6 +59,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate_ingredients(self, value):
+        """
+        Валидирует список ингредиентов: проверяет существование и уникальность.
+        """
         if not value:
             raise ValidationError(
                 {"ingredients": "Поле 'ingredients' не может быть пустым."}
@@ -118,6 +126,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         RecipeIngredient.objects.bulk_create(recipeingredient_list)
 
     def to_representation(self, instance):
+        """
+        Возвращает рецепт в формате для чтения через RecipeReadSerializer.
+        """
         from .recipe_read import RecipeReadSerializer
         return RecipeReadSerializer(
             instance,

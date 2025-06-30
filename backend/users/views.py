@@ -1,13 +1,9 @@
 from django.shortcuts import render
 
-# Create your views here.
-
-# Стандартные библиотеки
 import logging
 import base64
 import uuid
 
-# Сторонние библиотеки
 from django.core.files.base import ContentFile
 from django.contrib.auth.hashers import check_password
 from django.db.models import Count
@@ -19,7 +15,6 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 
-# Наши (локальные) импорты
 from recipes.models import Recipe
 from .models import User, Subscription
 from .serializers import (
@@ -33,11 +28,15 @@ logger = logging.getLogger(__name__)
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет для регистрации, смены пароля и аватара пользователя.
+    """
     queryset = User.objects.all().order_by("email")
     serializer_class = UserSerializer
     pagination_class = UserPagination
 
     def get_permissions(self):
+        """Разрешает регистрацию всем пользователям, остальные действия требуют авторизации."""
         if self.action == "create":
             return [AllowAny()]
         return super().get_permissions()
@@ -61,6 +60,10 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def set_password(self, request):
+        """
+        Изменяет пароль пользователя.
+        Требует текущий пароль для подтверждения.
+        """
         user = request.user
         old_password = request.data.get("current_password")
         new_password = request.data.get("new_password")
@@ -131,6 +134,11 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, pk=None):
+        """
+        Управляет подпиской на автора рецептов.
+        POST: создает подписку и возвращает информацию об авторе с рецептами
+        DELETE: удаляет подписку
+        """
         from http import HTTPStatus
 
         user = request.user
@@ -189,6 +197,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["delete"])
     def unsubscribe(self, request, pk=None):
+        """Удаляет подписку на автора рецептов."""
         user = request.user
         author = self.get_object()
         Subscription.objects.filter(user=user, author=author).delete()
@@ -199,6 +208,10 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def subscriptions(self, request):
+        """
+        Возвращает список авторов, на которых подписан пользователь.
+        Включает количество рецептов и ограниченный список рецептов каждого автора.
+        """
         user = request.user
         subscriptions = User.objects.filter(
             subscribers__user=user
@@ -237,6 +250,10 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class LogoutView(APIView):
+    """
+    Представление для выхода пользователя из системы.
+    Удаляет токен аутентификации.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -257,7 +274,12 @@ class LogoutView(APIView):
                 status=HTTPStatus.INTERNAL_SERVER_ERROR
             )
 
+
 class AuthTokenView(ObtainAuthToken):
+    """
+    Представление для получения токена аутентификации.
+    Использует email вместо username для входа.
+    """
     serializer_class = EmailAuthTokenSerializer
 
     def post(self, request, *args, **kwargs):

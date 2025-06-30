@@ -14,6 +14,10 @@ from constants import (
 
 
 class EmailAuthTokenSerializer(serializers.Serializer):
+    """
+    Сериализатор для аутентификации пользователей по email и паролю.
+    Проверяет учетные данные и возвращает пользователя при успешной аутентификации.
+    """
     email = serializers.EmailField(label="Email")
     password = serializers.CharField(
         label="Password",
@@ -21,6 +25,9 @@ class EmailAuthTokenSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
+        """
+        Проверяет email и парол, аутентифицирует пользователя.
+        """
         email = attrs.get("email")
         password = attrs.get("password")
 
@@ -45,6 +52,10 @@ class EmailAuthTokenSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для отображения информации о пользователе.
+    Включает статус подписки и аватар в base64.
+    """
     avatar = Base64ImageField(required=False, allow_null=True)
     is_subscribed = serializers.SerializerMethodField()
 
@@ -70,6 +81,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для регистрации новых пользователей.
+    Включает валидацию полей и хеширование пароля.
+    """
     password = serializers.CharField(write_only=True)
     first_name = serializers.CharField(
         required=True,
@@ -110,6 +125,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate_username(self, value):
+        """
+        Проверяет корректность username: формат, запрещенные значения, уникальность.
+        """
         pattern = r'^[\w.@+-]+$'
         if not re.match(pattern, value):
             raise ValidationError("Неверный формат username.")

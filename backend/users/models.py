@@ -4,6 +4,9 @@ from django.db.models import UniqueConstraint
 
 
 class User(AbstractUser):
+    """
+    Расширенная модель пользователя с email в качестве основного идентификатора.
+    """
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
     email = models.EmailField(unique=True)
@@ -37,6 +40,10 @@ class User(AbstractUser):
 
 
 class Subscription(models.Model):
+    """
+    Модель для управления подписками пользователей на авторов рецептов.
+    Обеспечивает уникальность связей между подписчиком и автором.
+    """
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

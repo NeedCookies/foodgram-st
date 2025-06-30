@@ -1,13 +1,12 @@
-# Сторонние библиотеки
 from rest_framework import serializers
 
-# Наши (локальные) импорты
 from users.serializers import UserSerializer
 from ..fields import Base64ImageField
 from ..models import Recipe
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
+    """ Сериализатор для чтения и отображения рецептов. """
     author = UserSerializer(read_only=True)
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
@@ -22,6 +21,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         ]
 
     def get_is_favorited(self, obj):
+        """
+        Определяет, находится ли рецепт в избранном у текущего пользователя.
+        Возвращает True, если пользователь авторизован и добавил рецепт в избранное.
+        """
         request = self.context.get("request")
         return (
             request
@@ -30,6 +33,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
     def get_is_in_shopping_cart(self, obj):
+        """
+        Проверяет наличие рецепта в корзине покупок пользователя.
+        Возвращает True, если пользователь авторизован и рецепт добавлен в корзину.
+        """
         request = self.context.get("request")
         return (
             request
@@ -38,6 +45,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
     def get_ingredients(self, obj):
+        """ Формирует список ингредиентов рецепта с их количеством. """
         recipeingredients = (
             obj.recipeingredient_set
                .select_related("ingredient")

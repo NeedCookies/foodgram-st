@@ -86,7 +86,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Фильтрация рецептов по корзине и избранному."""
-        queryset = super().get_queryset()
+        queryset = Recipe.objects.select_related('author').prefetch_related('ingredients')
         user = self.request.user
         is_in_shopping_cart = self.request.query_params.get(
             "is_in_shopping_cart"

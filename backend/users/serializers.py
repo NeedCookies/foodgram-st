@@ -137,6 +137,22 @@ class UserCreateSerializer(serializers.ModelSerializer):
             raise ValidationError("Такой username уже зарегистрирован.")
         return value
 
+    def validate_password(self, value):
+        """
+        Проверяет пароль на соответствие требованиям:
+        - не менее 8 символов
+        - не совпадает с username
+        - не состоит только из цифр
+        """
+        username = self.initial_data.get('username', '')
+        if len(value) < 8:
+            raise ValidationError("Пароль должен содержать не менее 8 символов.")
+        if value == username:
+            raise ValidationError("Пароль не должен совпадать с именем пользователя.")
+        if value.isdigit():
+            raise ValidationError("Пароль не может состоять только из цифр.")
+        return value
+
     def create(self, validated_data):
         user = User(**validated_data)
         user.set_password(validated_data["password"])

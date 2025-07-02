@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 import logging
 import base64
 import uuid
@@ -83,6 +81,21 @@ class UserViewSet(viewsets.ModelViewSet):
         if old_password == new_password:
             return Response(
                 {"error": "Новый пароль не должен совпадать с текущим."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(new_password) < 8:
+            return Response(
+                {"error": "Пароль должен содержать не менее 8 символов."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if new_password == user.username:
+            return Response(
+                {"error": "Пароль не должен совпадать с именем пользователя."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if new_password.isdigit():
+            return Response(
+                {"error": "Пароль не может состоять только из цифр."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         user.set_password(new_password)
